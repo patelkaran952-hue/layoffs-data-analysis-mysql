@@ -162,8 +162,121 @@ where total_laid_off is null;
 UPDATE layoffsgpt_cleaned
 SET location = REPLACE(location, ', Non-U.S.', '');
 
+UPDATE layoffsgpt_cleaned
+SET total_laid_off = TRUNCATE(total_laid_off, 0);
+
+ALTER TABLE layoffsgpt_cleaned
+MODIFY COLUMN total_laid_off INT;
+
+update layoffsgpt_cleaned
+SET date_added = STR_TO_DATE(date_added, '%m/%d/%Y');
+
 select *
 from layoffsgpt_cleaned;
+
+
+-- Exploratory Data Cleaning
+
+SELECT company, total_laid_off
+FROM layoffsgpt_cleaned
+ORDER BY total_laid_off DESC;
+
+SELECT company, country, total_laid_off
+from layoffsgpt_cleaned
+WHERE company = 'Meta';
+
+SELECT company, MIN(date), MAX(date) 
+FROM layoffsgpt_cleaned
+group by company;
+
+SELECT industry, SUM(total_laid_off) AS total_layoffs
+FROM layoffsgpt_cleaned
+GROUP BY industry
+ORDER BY total_layoffs DESC;
+
+SELECT country, SUM(total_laid_off) AS total_layoffs
+FROM layoffsgpt_cleaned
+GROUP BY country
+ORDER BY total_layoffs DESC;
+
+SELECT stage, SUM(total_laid_off) AS total_layoffs
+FROM layoffsgpt_cleaned
+GROUP BY stage
+ORDER BY total_layoffs DESC;
+
+-- Total layoffs per year 
+SELECT YEAR(`date`) AS year,
+       SUM(total_laid_off) AS total_layoffs
+FROM layoffsgpt_cleaned
+GROUP BY YEAR(`date`)
+ORDER BY year;
+
+-- Total layoffs per month
+SELECT DATE_FORMAT(`date`, '%Y-%m') AS month, country,
+       SUM(total_laid_off) AS total_layoffs
+FROM layoffsgpt_cleaned
+GROUP BY month, country
+ORDER BY total_layoffs DESC;
+
+
+-- Rolling total per month
+with Rolling_Total as 
+(
+select substring(`date`,1,7) as `Month`, sum(total_laid_off) as total_off
+from layoffsgpt_cleaned
+where substring(`date`,1,7) is not null
+group by `Month`
+order by 1
+)
+select `Month`, total_off, sum(total_off) over(order by `Month`) as rolling_total
+from Rolling_Total;
+
+
+-- Rolling total by Year
+with Rolling_Total as 
+(
+select substring(`date`,1,4) as `Year`, sum(total_laid_off) as total_off
+from layoffsgpt_cleaned
+where substring(`date`,1,4) is not null
+group by `Year`
+order by 1
+)
+select `Year`, total_off, sum(total_off) over(order by `Year`) as rolling_total
+from Rolling_Total;
+
+
+select company, year(`date`), sum(total_laid_off)
+from layoffsgpt_cleaned
+group by company, year(`date`)
+order by 3 desc;
+
+
+-- Top 5 companies with layoffs in each year
+with Company_Year (Company, Years, total_laid_off) as
+(
+select company, year(`date`), sum(total_laid_off)
+from layoffsgpt_cleaned
+group by company, year(`date`)
+), Company_Year_Rank as
+(select *,
+dense_rank() over (partition by years order by total_laid_off desc) as Ranking
+from Company_Year
+where years is not null
+)
+select *
+from Company_Year_Rank
+where Ranking <= 5;
+
+
+
+
+
+
+
+
+
+
+
 
 
 
