@@ -66,18 +66,118 @@ select *
 from layoffsgpt3;
 
 
--- Standardize Data
+-- Standardise Data
 
 select company, trim(company)
 from layoffsgpt3;
 
-UPDATE layoffsgpt2
+UPDATE layoffsgpt3
 SET 
     company = TRIM(company),
     location = TRIM(location),
     industry = TRIM(industry),
     country = TRIM(country),
     stage = TRIM(stage);
+    
+select *
+from layoffsgpt3;
+
+
+-- Replace empty values with NULL
+
+select *
+from layoffsgpt3
+where total_laid_off = ''
+and percentage_laid_off = '';
+
+update layoffsgpt3
+set total_laid_off = null
+where total_laid_off = '';
+
+select *
+from layoffsgpt3
+where country = '';
+
+update layoffsgpt3
+set country = 'Canada'
+where company = 'Ludia';
+
+select *
+from layoffsgpt3
+where industry = '';
+
+update layoffsgpt3
+set industry = null
+where industry = '';
+
+select *
+from layoffsgpt3
+where stage = '';
+
+update layoffsgpt3
+set stage = null
+where stage = '';
+
+
+-- Standardise Dates
+
+select `date`
+from layoffsgpt3;
+
+UPDATE layoffsgpt3
+SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
+
+CREATE TABLE layoffsgpt4 AS
+SELECT DISTINCT *
+FROM layoffsgpt3;
+
+select `date`
+from layoffsgpt4;
+
+UPDATE layoffsgpt4
+SET `date` = STR_TO_DATE(`date`, '%m/%d/%Y');
+
+alter table layoffsgpt4
+drop row_num;
+
+delete
+from layoffsgpt4
+where row_num > 1;
+
+select *
+from layoffsgpt4;
+
+CREATE TABLE layoffsgpt_cleaned AS
+SELECT *
+FROM layoffsgpt4;
+
+select *
+from layoffsgpt_cleaned
+where total_laid_off is null;
+
+delete
+from layoffsgpt_cleaned
+where total_laid_off is null;
+
+UPDATE layoffsgpt_cleaned
+SET location = REPLACE(location, ', Non-U.S.', '');
+
+select *
+from layoffsgpt_cleaned;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
