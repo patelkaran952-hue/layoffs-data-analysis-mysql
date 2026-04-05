@@ -67,3 +67,7 @@ This project analyzes global layoffs data using MySQL. The goal is to clean raw 
 ---
 
 ## 📁 Project Structure
+
+│── data/layoffsGPT.csv
+│── Project layoffs.sql 
+│── README.md
